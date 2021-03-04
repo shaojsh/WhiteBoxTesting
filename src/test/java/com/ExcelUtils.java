@@ -1,38 +1,17 @@
-package com.dzpykj.files.excel;
+package com;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.VerticalAlignment;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.google.common.collect.Maps;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Excel操作工具类
@@ -52,9 +31,10 @@ public class ExcelUtils {
      * @param filepath filepath 文件全路径
      * @param sheetNo sheet序号,从0开始,如果读取全文sheetNo设置null
      */
-    public static String readExcel(String filepath, Integer sheetNo)
+    public static List readExcel(String filepath, Integer sheetNo)
             throws EncryptedDocumentException, InvalidFormatException, IOException {
         StringBuilder sb = new StringBuilder();
+        List l = new ArrayList();
         Workbook workbook = getWorkbook(filepath);
         if (workbook != null) {
             if (sheetNo == null) {
@@ -69,11 +49,11 @@ public class ExcelUtils {
             } else {
                 Sheet sheet = workbook.getSheetAt(sheetNo);
                 if (sheet != null) {
-                    sb.append(readExcelSheet(sheet));
+                    l =  readTestData(sheet);
                 }
             }
         }
-        return sb.toString();
+        return l;
     }
 
     /**
@@ -148,6 +128,56 @@ public class ExcelUtils {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * 测试数据获取
+     * */
+    private static List readTestData(Sheet sheet) {
+
+        ArrayList titleList = new ArrayList();
+        ArrayList dataList = new ArrayList();
+        int columNos = 0;
+        if(sheet != null){
+            int rowNos = sheet.getLastRowNum();// 得到excel的总记录条数
+            for (int i = 0; i <= rowNos; i++) {// 遍历行
+                Row row = sheet.getRow(i);
+                if(row != null){
+                    columNos = row.getLastCellNum();// 表头总共的列数
+                    Cell cellData = row.getCell(i);
+                    for (int j = 0; j < columNos; j++) {
+                        Cell cell = row.getCell(j);
+                        cell.setCellType(CellType.STRING);
+                        if(cell != null){
+                            String data = cell.getStringCellValue();
+                            titleList.add(data);
+                            // System.out.print(cell.getStringCellValue() + " ");
+                        }
+
+                    }
+
+                }
+            }
+
+            }
+        int flag = 0;
+        ArrayList  excelDataList = new ArrayList() ;
+            for (int m = 0;m<=titleList.size();m++){
+                if (flag < columNos){
+                    dataList.add(titleList.get(m));
+                    flag = flag +1;
+                } else {
+                    excelDataList.add(dataList);
+                    flag = 1;
+                    dataList = new ArrayList();
+                    if(m ==titleList.size()){
+                        break;
+                    }
+                    dataList.add(titleList.get(m));
+
+                }
+            }
+       return excelDataList;
     }
 
     /**
